@@ -138,8 +138,8 @@ void CopterCtrl::onSettingsValueChange(const QString &key, const QVariant &value
 
 void CopterCtrl::adjustTilt(QVector3D tilt) const
 {
-	m_axisX->tilt(m_axisX->tilt() + tilt.x());
-	m_axisY->tilt(m_axisY->tilt() + tilt.y());
+	m_axisX->tilt(tilt.x());
+	m_axisY->tilt(tilt.y());
 	m_axisX->setPower(m_power);
 	m_axisY->setPower(m_power);
 }
