@@ -50,18 +50,18 @@ void MainWindow::onMotorPowerChange(CopterCtrl::Motor motor, float power)
 		case CopterCtrl::MotorAll: lcd = m_ui->motor_all; break;
 	}
 
-//	QPalette palette = lcd->palette();
-//	QColor bg = palette.color(QPalette::Disabled, lcd->backgroundRole());
-//	float powerMax = m_settings->value("PowerMax").toFloat();
-//	float powerMin = m_settings->value("PowerMin").toFloat();
-//	float pwrSat = 1.0 - static_cast<float>((power - powerMin) / (2 * powerMax - powerMin));
-//	bg.setBlue(bg.blue()   * pwrSat);
-//	bg.setGreen(bg.green() * pwrSat + 0xff * (1.0 - pwrSat));
-//	bg.setRed(bg.red()     * pwrSat);
-//	palette.setColor(QPalette::Normal, lcd->backgroundRole(), bg);
-//	palette.setColor(QPalette::Active, lcd->backgroundRole(), bg);
-//	palette.setColor(QPalette::Inactive, lcd->backgroundRole(), bg);
-//	lcd->setPalette(palette);
+	QPalette palette = lcd->palette();
+	QColor bg = palette.color(QPalette::Disabled, lcd->backgroundRole());
+	float powerMax = m_settings->value("PowerMax").toFloat();
+	float powerMin = m_settings->value("PowerMin").toFloat();
+	float pwrSat = 1.0 - static_cast<float>((power - powerMin) / (2 * powerMax - powerMin));
+	bg.setBlue(bg.blue()   * pwrSat);
+	bg.setGreen(bg.green() * pwrSat + 0xff * (1.0 - pwrSat));
+	bg.setRed(bg.red()     * pwrSat);
+	palette.setColor(QPalette::Normal, lcd->backgroundRole(), bg);
+	palette.setColor(QPalette::Active, lcd->backgroundRole(), bg);
+	palette.setColor(QPalette::Inactive, lcd->backgroundRole(), bg);
+	lcd->setPalette(palette);
 	lcd->display(power);
 }
 

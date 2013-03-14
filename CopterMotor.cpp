@@ -38,7 +38,9 @@ CopterMotor::~CopterMotor()
 
 void CopterMotor::setPower(unsigned int _power)
 {
-	_power = qMax(m_powerMin, qMin(m_powerMax, static_cast<int>(_power)));
+	int powerMax = m_settings->value("PowerMax").toInt();
+	int powerMin = m_settings->value("PowerMin").toInt();
+	_power = qMax(powerMin, qMin(powerMax, static_cast<int>(_power)));
 	invoke(_power);
 	emit powerChanged(static_cast<float>(_power));
 }
