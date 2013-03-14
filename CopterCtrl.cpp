@@ -44,10 +44,12 @@ CopterCtrl::CopterCtrl() :
 void CopterCtrl::initMotors(const QString& motorControlPath)
 {
 	QString motorControlFile = m_settings->value("MotorControlFile").toString();
-	CopterMotor* mx1 = new CopterMotor(m_settings, motorControlPath + "ehrpwm.0/pwm/ehrpwm.0:0/" + motorControlFile);
-	CopterMotor* mx2 = new CopterMotor(m_settings, motorControlPath + "ehrpwm.0/pwm/ehrpwm.0:1/" + motorControlFile);
-	CopterMotor* my1 = new CopterMotor(m_settings, motorControlPath + "ehrpwm.1/pwm/ehrpwm.1:0/" + motorControlFile);
-	CopterMotor* my2 = new CopterMotor(m_settings, motorControlPath + "ehrpwm.1/pwm/ehrpwm.1:1/" + motorControlFile);
+	int powerMax = m_settings->value("PowerMax").toInt();
+	int powerMin = m_settings->value("PowerMin").toInt();
+	CopterMotor* mx1 = new CopterMotor(powerMin, powerMax, motorControlPath + "ehrpwm.0/pwm/ehrpwm.0:0/" + motorControlFile);
+	CopterMotor* mx2 = new CopterMotor(powerMin, powerMax, motorControlPath + "ehrpwm.0/pwm/ehrpwm.0:1/" + motorControlFile);
+	CopterMotor* my1 = new CopterMotor(powerMin, powerMax, motorControlPath + "ehrpwm.1/pwm/ehrpwm.1:0/" + motorControlFile);
+	CopterMotor* my2 = new CopterMotor(powerMin, powerMax, motorControlPath + "ehrpwm.1/pwm/ehrpwm.1:1/" + motorControlFile);
 	m_motorIds.insert(mx1, MotorX1);
 	m_motorIds.insert(mx2, MotorX2);
 	m_motorIds.insert(my1, MotorY1);
@@ -57,8 +59,8 @@ void CopterCtrl::initMotors(const QString& motorControlPath)
 	connect(my1, SIGNAL(powerChanged(float)), this, SLOT(onMotorPowerChange(float)));
 	connect(my2, SIGNAL(powerChanged(float)), this, SLOT(onMotorPowerChange(float)));
 
-	m_axisX = new CopterAxis(mx1, mx2);
-	m_axisY = new CopterAxis(my1, my2);
+	m_axisX = new CopterAxis(mx1, mx2, m_settings);
+	m_axisY = new CopterAxis(my1, my2, m_settings);
 }
 
 void CopterCtrl::initSettings()
@@ -140,8 +142,6 @@ void CopterCtrl::adjustTilt(QVector3D tilt) const
 {
 	m_axisX->tilt(tilt.x());
 	m_axisY->tilt(tilt.y());
-	m_axisX->setPower(m_power);
-	m_axisY->setPower(m_power);
 }
 
 void CopterCtrl::adjustPower(int _incr)
