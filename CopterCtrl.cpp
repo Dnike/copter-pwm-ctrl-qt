@@ -43,8 +43,8 @@ CopterCtrl::CopterCtrl() :
 
 	// accelerometer setup
 	m_accel = new Accelerometer(m_settings->value("AccelInputPath").toString(), this);
-	connect(m_accel, SIGNAL(accelerometerRead(QVector3D)),
-					this, SIGNAL(accelerometerRead(QVector3D)));
+	connect(m_accel, SIGNAL(accelerometerRead(QVector3D)), this, SIGNAL(accelerometerRead(QVector3D)));
+	connect(m_accel, SIGNAL(accelerometerRead(QVector3D)), this, SLOT(onAccelerometerRead(QVector3D)));
 	connect(m_accel, SIGNAL(accelerometerRead(QVector3D)), this, SLOT(handleTilt(QVector3D)));
 	connect(m_accel, SIGNAL(zeroAxisChanged(QVector3D)), this, SIGNAL(zeroAxisChanged(QVector3D)));
 }
@@ -179,6 +179,9 @@ void CopterCtrl::setupAccelZeroAxis()
 
 void CopterCtrl::onAccelerometerRead(QVector3D val)
 {
+	QString stringRepresentation;
+	&stringRepresentation << val;
+	debugTcpLog(stringRepresentation);
 }
 
 void CopterCtrl::handleTilt(QVector3D tilt)
