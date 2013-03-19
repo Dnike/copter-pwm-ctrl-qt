@@ -11,6 +11,9 @@ public:
 	void tilt(float _tilt);
 
 	void setPower(int _power);
+	int motorPower1() const { return m_motor1->power(); }
+	int motorPower2() const { return m_motor2->power(); }
+
 
 public slots:
 	void emergencyStop();

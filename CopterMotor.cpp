@@ -4,6 +4,7 @@
 
 void CopterMotor::invoke(int _power)
 {
+	m_power = _power;
 	QString s;
 	float powerFactor = (float)(m_powerMax - m_powerMin) / 100;
 	s.sprintf("%d\n", static_cast<int>(_power * powerFactor + m_powerMin));
@@ -19,7 +20,8 @@ CopterMotor::CopterMotor(int powerMin, int powerMax, const QString& _ctrlPath) :
 	m_ctrlFile(_ctrlPath),
 	m_delta(1.0),
 	m_powerMin(powerMin),
-	m_powerMax(powerMax)
+	m_powerMax(powerMax),
+	m_power(0)
 {
 	if (!m_ctrlFile.open(QIODevice::WriteOnly|QIODevice::Truncate|QIODevice::Unbuffered|QIODevice::Text)) {
 		qDebug() << "Can't open motor control file " + m_ctrlFile.fileName() << endl;

@@ -179,9 +179,6 @@ void CopterCtrl::setupAccelZeroAxis()
 
 void CopterCtrl::onAccelerometerRead(QVector3D val)
 {
-	QString stringRepresentation;
-	&stringRepresentation << val;
-	debugTcpLog(stringRepresentation);
 }
 
 void CopterCtrl::handleTilt(QVector3D tilt)
@@ -203,6 +200,15 @@ void CopterCtrl::handleTilt(QVector3D tilt)
 
 	adjustTilt(adj);
 	m_lastTilt = tilt;
+
+	// debug log
+	QStringList debugLineList;
+	debugLineList << QString::number(tilt.x()) << QString::number(tilt.y()) << QString::number(tilt.z()) <<
+									 QString::number(adj.x())  << QString::number(adj.y())  << QString::number(adj.z())  <<
+									 QString::number(m_power)  <<
+									 QString::number(m_axisX->motorPower1()) << QString::number(m_axisX->motorPower2())  <<
+									 QString::number(m_axisY->motorPower1()) << QString::number(m_axisY->motorPower2());
+	debugTcpLog(debugLineList.join(","));
 }
 
 void CopterCtrl::emergencyStop()
@@ -315,7 +321,6 @@ void CopterCtrl::onDebugTcpNetworkRead()
 {
 	if (m_debugTcpConnection.isNull())
 		return;
-
 
 }
 

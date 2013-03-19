@@ -12,6 +12,7 @@ public:
 	~CopterMotor();
 
 	void setPower(int _power);
+	int power() const { return m_power; }
 
 signals:
 	void powerChanged(float power);
@@ -24,4 +25,5 @@ protected:
 	float      m_delta;
 	int m_powerMax, m_powerMin; // real power, to write to ctrlFile
 	void invoke(int _power);
+	int m_power;
 };
