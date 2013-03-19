@@ -13,27 +13,35 @@ CopterCtrl::CopterCtrl() :
 	m_state(IDLE),
 	m_tcpServer(),
 	m_tcpConnection(),
+	m_debugTcpServer(),
+	m_debugTcpConnection(),
 	m_pidCounter(0),
 	m_pidIntegral()
 {
 	initSettings();
 	initMotors(m_settings->value("ControlPath").toString());
 
+	// PID setup
 	m_pidIntegralVector = QVector<QVector3D>(m_settings->value("PidIWindow").toInt(), QVector3D());
 
+	// tcp server setup
 	m_tcpServer.listen(QHostAddress::Any, m_settings->value("TcpPort").toInt());
-	connect(&m_tcpServer, SIGNAL(newConnection()), this, SLOT(onConnection()));
+	connect(&m_tcpServer, SIGNAL(newConnection()), this, SLOT(onTcpConnection()));
+
+	// debug tcp server setup
+	m_debugTcpServer.listen(QHostAddress::Any, m_settings->value("DebugPort").toInt());
+	connect(&m_tcpServer, SIGNAL(newConnection()), this, SLOT(onTcpConnection()));
 
 	// buttons reading
 	const QString s_buttons_input_path = m_settings->value("ButtonsInputPath").toString();
 	m_buttonsInputFd = ::open(s_buttons_input_path.toLatin1().data(), O_SYNC, O_RDONLY);
 	if (m_buttonsInputFd == -1)
 		qDebug() << "Cannot open buttons input file " << s_buttons_input_path << ", reason: " << errno;
-
 	m_buttonsInputNotifier = new QSocketNotifier(m_buttonsInputFd, QSocketNotifier::Read, this);
 	connect(m_buttonsInputNotifier, SIGNAL(activated(int)), this, SLOT(onButtonRead()));
 	m_buttonsInputNotifier->setEnabled(true);
 
+	// accelerometer setup
 	m_accel = new Accelerometer(m_settings->value("AccelInputPath").toString(), this);
 	connect(m_accel, SIGNAL(accelerometerRead(QVector3D)),
 					this, SIGNAL(accelerometerRead(QVector3D)));
@@ -75,6 +83,7 @@ void CopterCtrl::initSettings()
 		m_settings->setValue("ButtonsInputPath", "/dev/input/event0");
 		m_settings->setValue("AccelAdjustingTime", 5000);
 		m_settings->setValue("TcpPort", 4000);
+		m_settings->setValue("DebugPort", 7777);
 		m_settings->setValue("TiltStep", 0.02d);
 		m_settings->setValue("PowerStep1", 1);
 		m_settings->setValue("PowerStep2", 5);
@@ -193,6 +202,13 @@ void CopterCtrl::handleTilt(QVector3D tilt)
 	m_lastTilt = tilt;
 }
 
+void CopterCtrl::emergencyStop()
+{
+	m_axisX->emergencyStop();
+	m_axisY->emergencyStop();
+	QApplication::quit();
+}
+
 void CopterCtrl::tcpLog(const QString &message)
 {
 	if (!m_tcpConnection.isNull()) {
@@ -201,31 +217,24 @@ void CopterCtrl::tcpLog(const QString &message)
 	}
 }
 
-void CopterCtrl::emergencyStop()
-{
-	m_axisX->emergencyStop();
-	m_axisY->emergencyStop();
-	QApplication::quit();
-}
-
-void CopterCtrl::onConnection()
+void CopterCtrl::onTcpConnection()
 {
 	if (!m_tcpConnection.isNull())
 		qDebug() << "Replacing existing connection";
 	m_tcpConnection = m_tcpServer.nextPendingConnection();
 	qDebug() << "Accepted new connection";
 	m_tcpConnection->setSocketOption(QAbstractSocket::LowDelayOption, 1);
-	connect(m_tcpConnection, SIGNAL(disconnected()), this, SLOT(onDisconnected()));
-	connect(m_tcpConnection, SIGNAL(readyRead()), this, SLOT(onNetworkRead()));
+	connect(m_tcpConnection, SIGNAL(disconnected()), this, SLOT(onTcpDisconnection()));
+	connect(m_tcpConnection, SIGNAL(readyRead()), this, SLOT(onTcpNetworkRead()));
 }
 
-void CopterCtrl::onDisconnected()
+void CopterCtrl::onTcpDisconnection()
 {
 	qDebug() << "Existing connection disconnected";
 	m_tcpConnection = 0;
 }
 
-void CopterCtrl::onNetworkRead()
+void CopterCtrl::onTcpNetworkRead()
 {
 	if (m_tcpConnection.isNull())
 		return;
@@ -274,6 +283,38 @@ void CopterCtrl::onNetworkRead()
 	}
 }
 
+void CopterCtrl::debugTcpLog(const QString &message)
+{
+	if (!m_debugTcpConnection.isNull()) {
+		m_debugTcpConnection->write(message.toAscii());
+		m_debugTcpConnection->write("\n\r");
+	}
+}
+
+void CopterCtrl::onDebugTcpConnection()
+{
+	if (!m_debugTcpConnection.isNull())
+		qDebug() << "Replacing existing debug connection";
+	m_debugTcpConnection = m_debugTcpServer.nextPendingConnection();
+	qDebug() << "Accepted new debug connection";
+	m_debugTcpConnection->setSocketOption(QAbstractSocket::LowDelayOption, 1);
+	connect(m_debugTcpConnection, SIGNAL(disconnected()), this, SLOT(onDebugTcpDisconnection()));
+	connect(m_debugTcpConnection, SIGNAL(readyRead()), this, SLOT(onDebugTcpNetworkRead()));
+}
+
+void CopterCtrl::onDebugTcpDisconnection()
+{
+	qDebug() << "Existing debug connection disconnected";
+	m_debugTcpConnection = 0;
+}
+
+void CopterCtrl::onDebugTcpNetworkRead()
+{
+	if (m_debugTcpConnection.isNull())
+		return;
+
+
+}
 
 void CopterCtrl::onButtonRead()
 {

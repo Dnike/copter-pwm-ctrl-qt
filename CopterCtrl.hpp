@@ -65,13 +65,17 @@ public slots:
 	void setupAccelZeroAxis();
 	void handleTilt(QVector3D tilt);
 	void tcpLog(const QString& message);
+	void debugTcpLog(const QString& message);
 	void emergencyStop();
 
 protected slots:
 	void onAccelerometerRead(QVector3D val);
-	void onConnection();
-	void onDisconnected();
-	void onNetworkRead();
+	void onTcpConnection();
+	void onTcpDisconnection();
+	void onTcpNetworkRead();
+	void onDebugTcpConnection();
+	void onDebugTcpDisconnection();
+	void onDebugTcpNetworkRead();
 	void onButtonRead();
 	void initMotors(const QString& motorControlPath);
 	void initSettings();
@@ -96,8 +100,13 @@ protected:
 
 	QMap<CopterMotor*, Motor> m_motorIds;
 
+	// TCP network (only in character mode for now)
 	QTcpServer           m_tcpServer;
 	QPointer<QTcpSocket> m_tcpConnection;
+	// Debug tcp network
+	QTcpServer           m_debugTcpServer;
+	QPointer<QTcpSocket> m_debugTcpConnection;
+	// On-board buttons
 	int                  m_buttonsInputFd;
 	QPointer<QSocketNotifier> m_buttonsInputNotifier;
 
