@@ -30,7 +30,7 @@ CopterCtrl::CopterCtrl() :
 
 	// debug tcp server setup
 	m_debugTcpServer.listen(QHostAddress::Any, m_settings->value("DebugPort").toInt());
-	connect(&m_tcpServer, SIGNAL(newConnection()), this, SLOT(onTcpConnection()));
+	connect(&m_debugTcpServer, SIGNAL(newConnection()), this, SLOT(onDebugTcpConnection()));
 
 	// buttons reading
 	const QString s_buttons_input_path = m_settings->value("ButtonsInputPath").toString();
