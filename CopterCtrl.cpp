@@ -216,7 +216,7 @@ void CopterCtrl::tcpLog(const QString &message)
 {
 	if (!m_tcpConnection.isNull()) {
 		m_tcpConnection->write(message.toAscii());
-		m_tcpConnection->write("\n\r");
+		m_tcpConnection->write("\r\n");
 	}
 }
 
@@ -290,7 +290,7 @@ void CopterCtrl::debugTcpLog(const QString &message)
 {
 	if (!m_debugTcpConnection.isNull()) {
 		m_debugTcpConnection->write(message.toAscii());
-		m_debugTcpConnection->write("\n\r");
+		m_debugTcpConnection->write("\r\n");
 	}
 }
 
