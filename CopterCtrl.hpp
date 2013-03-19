@@ -76,7 +76,7 @@ protected slots:
 	void initMotors(const QString& motorControlPath);
 	void initSettings();
 	void onMotorPowerChange(float power);
-	void adjustSettingsValue(const QString& key, bool increase = true);
+	void adjustSettingsValue(const QString& key, QMetaType::Type type, bool increase = true);
 	void onSettingsValueChange(const QString& key, const QVariant& value);
 
 signals:

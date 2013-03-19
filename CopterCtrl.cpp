@@ -44,8 +44,8 @@ CopterCtrl::CopterCtrl() :
 void CopterCtrl::initMotors(const QString& motorControlPath)
 {
 	QString motorControlFile = m_settings->value("MotorControlFile").toString();
-	int powerMax = m_settings->value("PowerMax").toInt();
-	int powerMin = m_settings->value("PowerMin").toInt();
+	int powerMax = m_settings->value("MotorMax").toInt();
+	int powerMin = m_settings->value("MotorMin").toInt();
 	CopterMotor* mx1 = new CopterMotor(powerMin, powerMax, motorControlPath + "ehrpwm.0/pwm/ehrpwm.0:0/" + motorControlFile);
 	CopterMotor* mx2 = new CopterMotor(powerMin, powerMax, motorControlPath + "ehrpwm.0/pwm/ehrpwm.0:1/" + motorControlFile);
 	CopterMotor* my1 = new CopterMotor(powerMin, powerMax, motorControlPath + "ehrpwm.1/pwm/ehrpwm.1:0/" + motorControlFile);
@@ -91,6 +91,7 @@ void CopterCtrl::initSettings()
 		m_settings->setValue("WriteLog", true);
 		m_settings->setValue("MotorControlFile", "duty_ns");
 		m_settings->setValue("NoGraphics", false);
+		m_settings->setValue("MotorIntervalAlpha", 0.5);
 	}
 
 	m_settings->setFallbacksEnabled(false);
@@ -104,18 +105,17 @@ void CopterCtrl::onMotorPowerChange(float power)
 	emit motorPowerChanged(m_motorIds[dynamic_cast<CopterMotor*>(sender())], power);
 }
 
-void CopterCtrl::adjustSettingsValue(const QString &key, bool increase)
+void CopterCtrl::adjustSettingsValue(const QString &key, QMetaType::Type type, bool increase)
 {
-	QVariant::Type type = m_settings->value(key).type();
 	switch(type) {
 		case QMetaType::Int:
 			m_settings->setValue(key, m_settings->value(key).toInt() + (increase ? 1 : -1));
 			break;
 		case QMetaType::Float:
-			m_settings->setValue(key, m_settings->value(key).toFloat() * (increase ? 0.9 : (1.0 / 0.9)));
+			m_settings->setValue(key, m_settings->value(key).toFloat() * (increase ? (1.0 / 0.9) : 0.9));
 			break;
 		case QMetaType::Double:
-			m_settings->setValue(key, m_settings->value(key).toDouble() * (increase ? 0.9 : (1.0 / 0.9)));
+			m_settings->setValue(key, m_settings->value(key).toDouble() * (increase ? (1.0 / 0.9) : 0.9));
 			break;
 		case QMetaType::Bool:
 			m_settings->setValue(key, increase);
@@ -182,7 +182,12 @@ void CopterCtrl::handleTilt(QVector3D tilt)
 	m_pidIntegral = m_pidIntegral + tilt - m_pidIntegralVector[m_pidCounter];
 	m_pidIntegralVector[m_pidCounter] = tilt;
 	m_pidCounter = (m_pidCounter + 1) % (m_settings->value("PidIWindow").toInt());
-	QVector3D adj = tilt * pidP + m_pidIntegral * pidI + (tilt - m_lastTilt) * pidD;
+//	float x = ((tilt.x() > 0) ? 1 : -1) * sqrt(fabs(tilt.x()));
+//	float y = ((tilt.y() > 0) ? 1 : -1) * sqrt(fabs(tilt.y()));
+//	float z = ((tilt.z() > 0) ? 1 : -1) * sqrt(fabs(tilt.z()));
+//	QVector3D psqrt = QVector3D(x, y, z);
+//	QVector3D adj = psqrt * pidP + m_pidIntegral * pidI + (tilt - m_lastTilt) * pidD;
+		QVector3D adj = tilt * pidP + m_pidIntegral * pidI + (tilt - m_lastTilt) * pidD;
 
 	adjustTilt(adj);
 	m_lastTilt = tilt;
@@ -255,16 +260,16 @@ void CopterCtrl::onNetworkRead()
 			case 'V': adjustPower(+s_power_max); break;
 			case '0': setupAccelZeroAxis(); break;
 			case 'a': emergencyStop(); break;
-			case '[': adjustSettingsValue("MotorMax", false); break;
-			case ']': adjustSettingsValue("MotorMax", true); break;
-			case '{': adjustSettingsValue("MotorMin", false); break;
-			case '}': adjustSettingsValue("MotorMin", true); break;
-			case ',': adjustSettingsValue("PidP", false); break;
-			case '.': adjustSettingsValue("PidP", true); break;
-			case '<': adjustSettingsValue("PidD", false); break;
-			case '>': adjustSettingsValue("PidD", true); break;
-			case '(': adjustSettingsValue("PidI", false); break;
-			case ')': adjustSettingsValue("PidI", true); break;
+			case '[': adjustSettingsValue("MotorMax", QMetaType::Int, false); break;
+			case ']': adjustSettingsValue("MotorMax", QMetaType::Int, true); break;
+			case '{': adjustSettingsValue("MotorMin", QMetaType::Int, false); break;
+			case '}': adjustSettingsValue("MotorMin", QMetaType::Int, true); break;
+			case ',': adjustSettingsValue("PidP", QMetaType::Float, false); break;
+			case '.': adjustSettingsValue("PidP", QMetaType::Float, true); break;
+			case '<': adjustSettingsValue("PidD", QMetaType::Float, false); break;
+			case '>': adjustSettingsValue("PidD", QMetaType::Float, true); break;
+			case '(': adjustSettingsValue("PidI", QMetaType::Float, false); break;
+			case ')': adjustSettingsValue("PidI", QMetaType::Float, true); break;
 		}
 	}
 }

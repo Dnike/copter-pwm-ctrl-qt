@@ -34,10 +34,13 @@ void CopterAxis::emergencyStop()
 
 void CopterAxis::updateMotorsPower()
 {
-	int power1 = floor(static_cast<float>(m_power) + m_tilt / 2);
-	int power2 = floor(static_cast<float>(m_power) - m_tilt / 2);
-	power1 = qMin(power1, m_power * 2);
-	power2 = qMin(power2, m_power * 2);
+	int power1 = floor(static_cast<float>(m_power) - m_tilt / 2);
+	int power2 = floor(static_cast<float>(m_power) + m_tilt / 2);
+	float alpha = m_settings->value("MotorIntervalAlpha").toFloat();
+	int upperBound = floor(m_power * (1 + alpha));
+	int lowerBound = floor(m_power * (1 - alpha));
+	power1 = qMax(lowerBound, qMin(power1, upperBound));
+	power2 = qMax(lowerBound, qMin(power2, upperBound));
 	int powerMax = m_settings->value("PowerMax").toInt();
 	int powerMin = m_settings->value("PowerMin").toInt();
 	power1 = qMax(powerMin, qMin(powerMax, power1));
