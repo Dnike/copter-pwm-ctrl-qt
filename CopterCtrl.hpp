@@ -98,6 +98,8 @@ protected:
 	CopterAxis* m_axisY;
 	QSettings* m_settings;
 
+	QVector3D m_lastDerivative;
+
 	QMap<CopterMotor*, Motor> m_motorIds;
 
 	// TCP network (only in character mode for now)

@@ -22,14 +22,16 @@ SOURCES +=      \
     CopterAxis.cpp \
     MainWindow.cpp \
     Main.cpp \
-    accelerometer.cpp
+    accelerometer.cpp \
+    gyro.cpp
 
 HEADERS +=      \
     CopterMotor.hpp \
     CopterCtrl.hpp \
     CopterAxis.hpp \
     MainWindow.hpp \
-    accelerometer.hpp
+    accelerometer.hpp \
+    gyro.hpp
 
 FORMS += \       
     MainWindow.ui

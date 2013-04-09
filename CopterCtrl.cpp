@@ -16,7 +16,8 @@ CopterCtrl::CopterCtrl() :
 	m_debugTcpServer(),
 	m_debugTcpConnection(),
 	m_pidCounter(0),
-	m_pidIntegral()
+	m_pidIntegral(),
+	m_lastDerivative()
 {
 	initSettings();
 	initMotors(m_settings->value("ControlPath").toString());
@@ -100,6 +101,7 @@ void CopterCtrl::initSettings()
 		m_settings->setValue("MotorControlFile", "duty_ns");
 		m_settings->setValue("NoGraphics", false);
 		m_settings->setValue("MotorIntervalAlpha", 0.5);
+		m_settings->setValue("DerivativeK", 0.6);
 	}
 
 	m_settings->setFallbacksEnabled(false);
@@ -195,7 +197,11 @@ void CopterCtrl::handleTilt(QVector3D tilt)
 //	float z = ((tilt.z() > 0) ? 1 : -1) * sqrt(fabs(tilt.z()));
 //	QVector3D psqrt = QVector3D(x, y, z);
 //	QVector3D adj = psqrt * pidP + m_pidIntegral * pidI + (tilt - m_lastTilt) * pidD;
-		QVector3D adj = tilt * pidP + m_pidIntegral * pidI + (tilt - m_lastTilt) * pidD;
+		QVector3D derivative = tilt - m_lastTilt;
+		float k = m_settings->value("DerivativeK").toFloat();
+		derivative = m_lastDerivative + k * (derivative - m_lastDerivative);
+		m_lastDerivative = derivative;
+		QVector3D adj = tilt * pidP + m_pidIntegral * pidI + derivative * pidD;
 
 	adjustTilt(adj);
 	m_lastTilt = tilt;
