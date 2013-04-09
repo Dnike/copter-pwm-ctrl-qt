@@ -29,12 +29,10 @@ Accelerometer::Accelerometer(const QString inputPath, CopterCtrl* copterCtrl, QO
 	m_inputNotifier = new QSocketNotifier(m_inputFd, QSocketNotifier::Read, this);
 	connect(m_inputNotifier, SIGNAL(activated(int)), this, SLOT(onRead()));
 	m_inputNotifier->setEnabled(true);
-	initLogFile();
 }
 
 Accelerometer::~Accelerometer()
 {
-	m_logFile->close();
 }
 
 void Accelerometer::onRead()
@@ -76,35 +74,6 @@ void Accelerometer::onRead()
 	}
 }
 
-void Accelerometer::initLogFile()
-{
-	if (!m_copterCtrl->getSettings()->value("WriteLog").toBool()) {
-		return;
-	}
-
-	m_logFile = new QFile("./accel-log-" + QTime::currentTime().toString("yyyy-MM-dd-hhmmss") + ".csv");
-	if (!m_logFile->open(QFile::WriteOnly)) {
-		qDebug() << "Can't open log file" << endl;
-	}
-	else {
-		m_logStream = new QTextStream(m_logFile);
-		// header of the csv
-		*m_logStream << "time,x_unfiltered,y_unfiltered,z_unfiltered,x_filtered,y_filtered,z_filtered" << endl;
-	}
-	m_logCounter = 0;
-}
-
-void Accelerometer::writeToLog(QStringList values)
-{
-	if (!m_copterCtrl->getSettings()->value("WriteLog").toBool()) {
-		return;
-	}
-	if (m_logStream->status() == QTextStream::Ok) {
-		++m_logCounter;
-		*m_logStream << m_logCounter << "," << values.join(",") << endl;
-	}
-}
-
 QVector3D Accelerometer::filterAxis(QVector3D axis)
 {
 	QVector3D res;
@@ -119,10 +88,6 @@ QVector3D Accelerometer::filterAxis(QVector3D axis)
 		case 7: res = filterLinearAlt(filterKalman(axis)); break;
 		default: res = filterKalman(axis); break;
 	}
-	QStringList vals;
-	vals << QString::number(axis.x()) << QString::number(axis.y()) << QString::number(axis.z())
-			 << QString::number(res.x()) << QString::number(res.y()) << QString::number(res.z());
-	writeToLog(vals);
 	return res;
 }
 

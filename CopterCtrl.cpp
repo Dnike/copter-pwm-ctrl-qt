@@ -97,7 +97,6 @@ void CopterCtrl::initSettings()
 		m_settings->setValue("PidD", -0.005d);
 		m_settings->setValue("PidIWindow", 10);
 		m_settings->setValue("FilterMethod", 3);
-		m_settings->setValue("WriteLog", true);
 		m_settings->setValue("MotorControlFile", "duty_ns");
 		m_settings->setValue("NoGraphics", false);
 		m_settings->setValue("MotorIntervalAlpha", 0.5);

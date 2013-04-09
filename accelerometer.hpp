@@ -22,8 +22,6 @@ signals:
 
 public slots:
 	void onRead();
-	void initLogFile();
-	void writeToLog(QStringList values);
 
 private:
 	QVector3D filterAxis(QVector3D axis);
@@ -34,10 +32,6 @@ private:
 
 	QVector3D m_kalmanOpt;
 	QVector3D m_linearOpt[3];
-
-	QFile* m_logFile;
-	QTextStream* m_logStream;
-	unsigned int m_logCounter;
 
 	float minVal, maxVal;
 	int m_adjustCounter;
