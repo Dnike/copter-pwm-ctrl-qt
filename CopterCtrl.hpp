@@ -30,13 +30,11 @@ public:
 	void adjustTilt(QVector3D tilt) const;
 	void adjustPower(int _incr);
 	enum CopterState { IDLE = 0,
-										 ADJUSTING_ACCEL,
 										 NUM_STATES };
 	const CopterState state() { return m_state; }
 	const QString stateString() {
 		switch (m_state) {
 			case IDLE: return QString("Idling..."); break;
-			case ADJUSTING_ACCEL: return QString("Adjusting accelerometer axis..."); break;
 			default: return QString("Unknown status"); break;
 		}
 	}
@@ -86,7 +84,6 @@ protected slots:
 signals:
 	void stateChanged(CopterState state);
 	void accelerometerRead(QVector3D val);
-	void zeroAxisChanged(QVector3D val);
 	void buttonPressed(BoardButton button);
 	void buttonReleased(BoardButton button);
 	void motorPowerChanged(CopterCtrl::Motor motor, float power);

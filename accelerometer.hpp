@@ -18,7 +18,6 @@ public:
 
 signals:
 	void accelerometerRead(QVector3D val);
-	void zeroAxisChanged(QVector3D val);
 
 public slots:
 	void onRead();
@@ -34,10 +33,10 @@ private:
 	QVector3D m_linearOpt[3];
 
 	float minVal, maxVal;
-	int m_adjustCounter;
 	int m_inputFd;
 	QVector3D m_zeroAxis;
 	QVector3D m_curAxis;
+	QVector3D m_lastAxis;
 	QVector3D m_prevAxis[5];
 	int m_meanCounter;
 	int m_linearCounter;

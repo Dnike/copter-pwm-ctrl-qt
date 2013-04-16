@@ -11,10 +11,10 @@ Accelerometer::Accelerometer(const QString inputPath, CopterCtrl* copterCtrl, QO
 	QObject(parent),
 	m_inputFd(-1),
 	m_inputNotifier(0),
-	m_adjustCounter(0),
 	m_copterCtrl(copterCtrl),
 	m_zeroAxis(),
 	m_curAxis(),
+	m_lastAxis(),
 	m_meanCounter(0),
 	m_linearCounter(0),
 	m_kalmanOpt()
@@ -50,12 +50,8 @@ void Accelerometer::onRead()
 		if (evt.type != EV_SYN)
 			qDebug() << "Input event type is not EV_ABS or EV_SYN: " << evt.type;
 		else {
-			if (m_copterCtrl->state() == CopterCtrl::ADJUSTING_ACCEL) {
-				m_zeroAxis = (m_zeroAxis * m_adjustCounter + m_curAxis) / (m_adjustCounter + 1);
-				++m_adjustCounter;
-				emit zeroAxisChanged(m_zeroAxis);
-			}
-			emit accelerometerRead(filterAxis(m_curAxis - m_zeroAxis));
+			m_lastAxis = filterAxis(m_curAxis - m_zeroAxis);
+			emit accelerometerRead(m_lastAxis);
 		}
 		return;
 	}
@@ -128,9 +124,6 @@ QVector3D Accelerometer::filterLinearAlt(QVector3D axis)
 
 void Accelerometer::adjustZeroAxis()
 {
-	m_adjustCounter = 0;
-	m_zeroAxis.setX(0);
-	m_zeroAxis.setY(0);
-	m_zeroAxis.setZ(0);
+	m_zeroAxis = m_lastAxis;
 }
 

@@ -47,7 +47,6 @@ CopterCtrl::CopterCtrl() :
 	connect(m_accel, SIGNAL(accelerometerRead(QVector3D)), this, SIGNAL(accelerometerRead(QVector3D)));
 	connect(m_accel, SIGNAL(accelerometerRead(QVector3D)), this, SLOT(onAccelerometerRead(QVector3D)));
 	connect(m_accel, SIGNAL(accelerometerRead(QVector3D)), this, SLOT(handleTilt(QVector3D)));
-	connect(m_accel, SIGNAL(zeroAxisChanged(QVector3D)), this, SIGNAL(zeroAxisChanged(QVector3D)));
 }
 
 void CopterCtrl::initMotors(const QString& motorControlPath)
@@ -82,7 +81,6 @@ void CopterCtrl::initSettings()
 		m_settings->setValue("ControlPath", "/sys/devices/platform/");
 		m_settings->setValue("AccelInputPath", "/dev/input/event1");
 		m_settings->setValue("ButtonsInputPath", "/dev/input/event0");
-		m_settings->setValue("AccelAdjustingTime", 5000);
 		m_settings->setValue("TcpPort", 4000);
 		m_settings->setValue("DebugPort", 7777);
 		m_settings->setValue("TiltStep", 0.02d);
@@ -170,12 +168,8 @@ void CopterCtrl::adjustPower(int _incr)
 
 void CopterCtrl::setupAccelZeroAxis()
 {
-	if (m_state != CopterCtrl::IDLE)
-		return;
 	tcpLog("Start zero axis setup");
-	setState(CopterCtrl::ADJUSTING_ACCEL);
-
-	QTimer::singleShot(m_settings->value("AccelAdjustingTime").toInt(), this, SLOT(setState()));
+	m_accel->adjustZeroAxis();
 }
 
 void CopterCtrl::onAccelerometerRead(QVector3D val)
@@ -266,15 +260,6 @@ void CopterCtrl::onTcpNetworkRead()
 			break;
 		switch (c)
 		{
-			case '1': adjustTilt(-s_tilt_step, -s_tilt_step); break;
-			case '2': adjustTilt(0,            -s_tilt_step); break;
-			case '3': adjustTilt(+s_tilt_step, -s_tilt_step); break;
-			case '4': adjustTilt(-s_tilt_step, 0); break;
-			case '5': tiltX(0); tiltY(0); break;
-			case '6': adjustTilt(+s_tilt_step, 0); break;
-			case '7': adjustTilt(-s_tilt_step, +s_tilt_step); break;
-			case '8': adjustTilt(0,            +s_tilt_step); break;
-			case '9': adjustTilt(+s_tilt_step, +s_tilt_step); break;
 			case 'Z': adjustPower(-s_power_max); break;
 			case 'z': adjustPower(-s_power_step2); break;
 			case 'x': adjustPower(-s_power_step1); break;
