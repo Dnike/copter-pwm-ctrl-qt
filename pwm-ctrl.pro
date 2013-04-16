@@ -23,7 +23,8 @@ SOURCES +=      \
     MainWindow.cpp \
     Main.cpp \
     accelerometer.cpp \
-    gyro.cpp
+    gyro.cpp \
+    flightcontrol.cpp
 
 HEADERS +=      \
     CopterMotor.hpp \
@@ -31,7 +32,8 @@ HEADERS +=      \
     CopterAxis.hpp \
     MainWindow.hpp \
     accelerometer.hpp \
-    gyro.hpp
+    gyro.hpp \
+    flightcontrol.hpp
 
 FORMS += \       
     MainWindow.ui

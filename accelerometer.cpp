@@ -51,7 +51,7 @@ void Accelerometer::onRead()
 			qDebug() << "Input event type is not EV_ABS or EV_SYN: " << evt.type;
 		else {
 			m_lastAxis = filterAxis(m_curAxis - m_zeroAxis);
-			emit accelerometerRead(m_lastAxis);
+			emit dataRead(m_lastAxis);
 		}
 		return;
 	}

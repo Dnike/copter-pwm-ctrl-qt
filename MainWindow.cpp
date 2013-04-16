@@ -11,18 +11,16 @@ MainWindow::MainWindow(CopterCtrl *copterCtrl, QWidget* _parent) :
 	m_ui->setupUi(this);
 
 	connect(m_copterCtrl, SIGNAL(stateChanged(CopterState)), this, SLOT(onStateChange()));
-	connect(m_copterCtrl, SIGNAL(accelerometerRead(QVector3D)), this, SLOT(onAccelerometerRead(QVector3D)));
-	connect(m_copterCtrl, SIGNAL(motorPowerChanged(CopterCtrl::Motor,float)),
-					this, SLOT(onMotorPowerChange(CopterCtrl::Motor,float)));
+	// TODO: use flight control signals
+//	connect(m_copterCtrl, SIGNAL(accelerometerRead(QVector3D)), this, SLOT(onAccelerometerRead(QVector3D)));
+//	connect(m_copterCtrl, SIGNAL(motorPowerChanged(CopterCtrl::Motor,float)),
+//					this, SLOT(onMotorPowerChange(CopterCtrl::Motor,float)));
 
 	// customize status bar appearance
 	QFont statusBarFont = statusBar()->font();
 	statusBarFont.setPointSize(5);
 	statusBar()->setFont(statusBarFont);
 	statusBar()->showMessage(m_copterCtrl->stateString());
-
-	// temporary, move to main
-	m_copterCtrl->adjustPower(0);
 
 	showFullScreen();
 }
@@ -39,15 +37,15 @@ void MainWindow::onAccelerometerRead(QVector3D val)
 	m_ui->cur_accel_z->setText(QString::number(static_cast<int>(val.z())));
 }
 
-void MainWindow::onMotorPowerChange(CopterCtrl::Motor motor, float power)
+void MainWindow::onMotorPowerChange(FlightControl::Motor motor, float power)
 {
 	QLCDNumber* lcd;
 	switch (motor) {
-		case CopterCtrl::MotorX1: lcd = m_ui->motor_x1; break;
-		case CopterCtrl::MotorX2: lcd = m_ui->motor_x2; break;
-		case CopterCtrl::MotorY1: lcd = m_ui->motor_y1; break;
-		case CopterCtrl::MotorY2: lcd = m_ui->motor_y2; break;
-		case CopterCtrl::MotorAll: lcd = m_ui->motor_all; break;
+		case FlightControl::MotorX1: lcd = m_ui->motor_x1; break;
+		case FlightControl::MotorX2: lcd = m_ui->motor_x2; break;
+		case FlightControl::MotorY1: lcd = m_ui->motor_y1; break;
+		case FlightControl::MotorY2: lcd = m_ui->motor_y2; break;
+		case FlightControl::MotorAll: lcd = m_ui->motor_all; break;
 	}
 
 	QPalette palette = lcd->palette();

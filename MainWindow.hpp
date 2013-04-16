@@ -3,6 +3,7 @@
 
 #include "ui_MainWindow.h"
 #include "CopterCtrl.hpp"
+#include "flightcontrol.hpp"
 
 class MainWindow : public QMainWindow
 {
@@ -13,7 +14,7 @@ public:
 public slots:
 	void onStateChange();
 	void onAccelerometerRead(QVector3D val);
-	void onMotorPowerChange(CopterCtrl::Motor motor, float power);
+	void onMotorPowerChange(FlightControl::Motor motor, float power);
 
 private:
 	CopterCtrl* m_copterCtrl;

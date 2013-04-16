@@ -4,8 +4,6 @@
 #include <QObject>
 #include "CopterCtrl.hpp"
 
-class CopterCtrl;
-
 class Accelerometer : public QObject
 {
 	Q_OBJECT
@@ -14,12 +12,12 @@ public:
 	~Accelerometer();
 	
 	void adjustZeroAxis();
-	QVector3D zeroAxis() { return m_zeroAxis; }
+	QVector3D getLastVal() { return m_lastAxis; }
 
 signals:
-	void accelerometerRead(QVector3D val);
+	void dataRead(QVector3D val);
 
-public slots:
+protected slots:
 	void onRead();
 
 private:
@@ -32,8 +30,6 @@ private:
 	QVector3D m_kalmanOpt;
 	QVector3D m_linearOpt[3];
 
-	float minVal, maxVal;
-	int m_inputFd;
 	QVector3D m_zeroAxis;
 	QVector3D m_curAxis;
 	QVector3D m_lastAxis;
@@ -41,6 +37,8 @@ private:
 	int m_meanCounter;
 	int m_linearCounter;
 	CopterCtrl* m_copterCtrl;
+
+	int m_inputFd;
 	QSocketNotifier* m_inputNotifier;
 };
 
