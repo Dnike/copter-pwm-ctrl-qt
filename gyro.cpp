@@ -16,7 +16,7 @@ Gyro::Gyro(const QString &inputPath, CopterCtrl *copterCtrl, QObject *parent) :
 {
 	m_inputFd = ::open(inputPath.toLatin1().data(), O_SYNC, O_RDONLY);
 	if (m_inputFd == -1)
-		qDebug() << "Cannot open accelerometer input file " << inputPath << ", reason: " << errno;
+		qDebug() << "Cannot open gyro input file " << inputPath << ", reason: " << errno;
 
 	m_inputNotifier = new QSocketNotifier(m_inputFd, QSocketNotifier::Read, this);
 	connect(m_inputNotifier, SIGNAL(activated(int)), this, SLOT(onRead()));

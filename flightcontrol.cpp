@@ -109,7 +109,10 @@ void FlightControl::handleTilt(QVector3D tilt)
 
 	// debug log
 	QStringList debugLineList;
+	// temporary
+	QVector3D gyro = m_gyro->getLastVal();
 	debugLineList << QString::number(tilt.x()) << QString::number(tilt.y()) << QString::number(tilt.z()) <<
+									 QString::number(gyro.x()) << QString::number(gyro.y()) << QString::number(gyro.z()) <<
 									 QString::number(adj.x())  << QString::number(adj.y())  << QString::number(adj.z())  <<
 									 QString::number(m_power)  <<
 									 QString::number(m_axisX->motorPower1()) << QString::number(m_axisX->motorPower2())  <<
