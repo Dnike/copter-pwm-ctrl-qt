@@ -8,16 +8,16 @@
 #include <QTime>
 
 Accelerometer::Accelerometer(const QString inputPath, CopterCtrl* copterCtrl, QObject *parent) :
-	QObject(parent),
-	m_inputFd(-1),
-	m_inputNotifier(0),
-	m_copterCtrl(copterCtrl),
-	m_zeroAxis(),
-	m_curAxis(),
-	m_lastAxis(),
-	m_meanCounter(0),
-	m_linearCounter(0),
-	m_kalmanOpt()
+  QObject(parent),
+  m_inputFd(-1),
+  m_inputNotifier(0),
+  m_copterCtrl(copterCtrl),
+  m_zeroAxis(),
+  m_curAxis(),
+  m_lastAxis(),
+  m_meanCounter(0),
+  m_linearCounter(0),
+  m_kalmanOpt()
 {
 	// TODO: write with vectors
 	for (int i = 0; i < 5; ++i) m_prevAxis[i] = QVector3D();
@@ -25,7 +25,7 @@ Accelerometer::Accelerometer(const QString inputPath, CopterCtrl* copterCtrl, QO
 	m_inputFd = ::open(inputPath.toLatin1().data(), O_SYNC, O_RDONLY);
 	if (m_inputFd == -1)
 		qDebug() << "Cannot open accelerometer input file " << inputPath << ", reason: " << errno;
-
+	
 	m_inputNotifier = new QSocketNotifier(m_inputFd, QSocketNotifier::Read, this);
 	connect(m_inputNotifier, SIGNAL(activated(int)), this, SLOT(onRead()));
 	m_inputNotifier->setEnabled(true);
@@ -38,13 +38,13 @@ Accelerometer::~Accelerometer()
 void Accelerometer::onRead()
 {
 	struct input_event evt;
-
+	
 	if (read(m_inputFd, reinterpret_cast<char*>(&evt), sizeof(evt)) != sizeof(evt))
 	{
 		qDebug() << "Incomplete accelerometer data read";
 		return;
 	}
-
+	
 	if (evt.type != EV_ABS)
 	{
 		if (evt.type != EV_SYN)
@@ -55,7 +55,7 @@ void Accelerometer::onRead()
 		}
 		return;
 	}
-
+	
 	switch (evt.code)
 	{
 		case ABS_X:
@@ -107,9 +107,9 @@ QVector3D Accelerometer::filterLinear(QVector3D axis)
 {
 	m_linearCounter = (m_linearCounter + 1) % 3;
 	m_linearOpt[m_linearCounter] = (axis +
-																	m_linearOpt[(m_linearCounter + 1) % 3] * 3 +
-																 m_linearOpt[(m_linearCounter + 2) % 3] * 3 +
-																 m_linearOpt[m_linearCounter]) / 8;
+	                                m_linearOpt[(m_linearCounter + 1) % 3] * 3 +
+	                               m_linearOpt[(m_linearCounter + 2) % 3] * 3 +
+	                               m_linearOpt[m_linearCounter]) / 8;
 	return m_linearOpt[m_linearCounter];
 }
 
@@ -117,8 +117,8 @@ QVector3D Accelerometer::filterLinearAlt(QVector3D axis)
 {
 	m_linearCounter = (m_linearCounter + 1) % 2;
 	m_linearOpt[m_linearCounter] = (axis +
-																	m_linearOpt[(m_linearCounter + 1) % 2] * 2 +
-																 m_linearOpt[m_linearCounter]) / 4;
+	                                m_linearOpt[(m_linearCounter + 1) % 2] * 2 +
+	                               m_linearOpt[m_linearCounter]) / 4;
 	return m_linearOpt[m_linearCounter];
 }
 

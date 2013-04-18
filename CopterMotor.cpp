@@ -14,6 +14,7 @@ void CopterMotor::invoke(int _power)
 		}
 	}
 	m_ctrlFile.write(s.toLatin1());
+	m_ctrlFile.close();
 }
 
 CopterMotor::CopterMotor(int powerMin, int powerMax, const QString& _ctrlPath) :
