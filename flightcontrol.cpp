@@ -6,6 +6,8 @@ FlightControl::FlightControl(CopterCtrl* copterCtrl) :
 	m_pidIntegral(),
 	m_lastDerivative(),
 	m_copterCtrl(copterCtrl),
+  m_lastTime(QTime::currentTime()),
+  m_lastLambda(),
 	QObject(copterCtrl)
 {
 	initMotors(m_copterCtrl->getSettings()->value("ControlPath").toString());
@@ -28,8 +30,8 @@ void FlightControl::initMotors(const QString& motorControlPath)
 	int powerMin = m_copterCtrl->getSettings()->value("MotorMin").toInt();
 	CopterMotor* mx1 = new CopterMotor(powerMin, powerMax, motorControlPath + "ehrpwm.0/pwm/ehrpwm.0:0/" + motorControlFile);
 	CopterMotor* mx2 = new CopterMotor(powerMin, powerMax, motorControlPath + "ehrpwm.0/pwm/ehrpwm.0:1/" + motorControlFile);
-	CopterMotor* my1 = new CopterMotor(powerMin, powerMax, motorControlPath + "ehrpwm.1/pwm/ehrpwm.1:0/" + motorControlFile);
-	CopterMotor* my2 = new CopterMotor(powerMin, powerMax, motorControlPath + "ehrpwm.1/pwm/ehrpwm.1:1/" + motorControlFile);
+	CopterMotor* my1 = new CopterMotor(powerMin, powerMax, motorControlPath + "ehrpwm.1/pwm/ehrpwm.1:1/" + motorControlFile);
+	CopterMotor* my2 = new CopterMotor(powerMin, powerMax, motorControlPath + "ehrpwm.1/pwm/ehrpwm.1:0/" + motorControlFile);
 	m_motorIds.insert(mx1, MotorX1);
 	m_motorIds.insert(mx2, MotorX2);
 	m_motorIds.insert(my1, MotorY1);
@@ -83,13 +85,68 @@ void FlightControl::onGyroRead(QVector3D val)
 
 }
 
-void FlightControl::handleTilt(QVector3D tilt)
+QQuaternion FlightControl::dLambda(QQuaternion lambda0, QQuaternion omega)
 {
-	float pidP = m_copterCtrl->getSettings()->value("PidP").toFloat();
-	float pidI = m_copterCtrl->getSettings()->value("PidI").toFloat();
-	float pidD = m_copterCtrl->getSettings()->value("PidD").toFloat();
+	return (lambda0 * omega + lambda0 * (1 - lambda0.length())) / 2;
+}
 
-	// TODO: handle case when window or coeff = 0
+QQuaternion FlightControl::getLambda(QQuaternion lambda0, QQuaternion omega, qreal dt)
+{
+    QQuaternion k1, k2, k3, k4;
+    k1 = dLambda(lambda0, omega) * dt;
+    k2 = dLambda(lambda0 + k1 * 0.5, omega) * dt;
+    k3 = dLambda(lambda0 + k2 * 0.5, omega) * dt;
+    k4 = dLambda(lambda0 + k3, omega) * dt;
+    return lambda0 + (k1 + k2 * 2 + k3 * 2 + k4) / 6;
+}
+
+QQuaternion FlightControl::rodrigGamiltonParams(QVector3D a, QVector3D b) {
+    QVector3D u = QVector3D::crossProduct(a,b);
+    u.normalize();
+    QVector3D q = a + b;
+    qreal sin_phi = QVector3D::crossProduct(q , b).length() / (q.length() * b.length()) ;
+    qreal cos_phi = QVector3D::dotProduct(q , b) / (q.length() * b.length());
+    return QQuaternion(cos_phi, u.x() * sin_phi, u.y() * sin_phi, u.z() * sin_phi);
+}
+
+QVector3D FlightControl::getAngles(QQuaternion lambda) {
+    qreal psi   = atan2( 2 * lambda.scalar() * lambda.y() - 
+		                     2 * lambda.x() * lambda.z(), 
+		                     2 * lambda.x() * lambda.x() + 
+		                     2 * lambda.scalar() * lambda.scalar() - 1);
+    qreal gamma = atan2( 2 * lambda.scalar() * lambda.x() - 
+		                     2 * lambda.y() * lambda.z(), 
+		                     2 * lambda.y() * lambda.y() + 
+		                     2 * lambda.scalar() * lambda.scalar() - 1);
+    qreal theta = asin(  2 * lambda.x() * lambda.y() + 
+		                     2 * lambda.scalar() * lambda.z() );
+		return QVector3D(psi, gamma, theta);
+}
+
+void FlightControl::handleTilt(QVector3D tilt)
+{	
+	QTime curTime = QTime::currentTime();
+	qreal dt = m_lastTime.msecsTo(curTime) / 1000.0;
+	m_lastTime = curTime;
+	
+	QQuaternion omega(0, m_gyro->getLastVal() / 938.0);
+
+	
+	QQuaternion lambda = getLambda(m_lastLambda, omega, dt);
+
+	QQuaternion lambda_accel = rodrigGamiltonParams(tilt.normalized(), QVector3D(0, 0, 1));
+	  //lambda1 = lambda1*(1-k_g) + lambda_accel*k_g;
+	
+	m_lastLambda = lambda;
+	
+	
+	qreal pidP = m_copterCtrl->getSettings()->value("PidP").toReal();
+	qreal pidI = m_copterCtrl->getSettings()->value("PidI").toReal();
+	qreal pidD = m_copterCtrl->getSettings()->value("PidD").toReal();
+
+	tilt = getAngles(lambda);
+	
+//	// TODO: handle case when window or coeff = 0
 	m_pidIntegral = m_pidIntegral + tilt - m_pidIntegralVector[m_pidCounter];
 	m_pidIntegralVector[m_pidCounter] = tilt;
 	m_pidCounter = (m_pidCounter + 1) % (m_copterCtrl->getSettings()->value("PidIWindow").toInt());
@@ -99,7 +156,7 @@ void FlightControl::handleTilt(QVector3D tilt)
 	//	QVector3D psqrt = QVector3D(x, y, z);
 	//	QVector3D adj = psqrt * pidP + m_pidIntegral * pidI + (tilt - m_lastTilt) * pidD;
 	QVector3D derivative = tilt - m_lastTilt;
-	float k = m_copterCtrl->getSettings()->value("DerivativeK").toFloat();
+	qreal k = m_copterCtrl->getSettings()->value("DerivativeK").toReal();
 	derivative = m_lastDerivative + k * (derivative - m_lastDerivative);
 	m_lastDerivative = derivative;
 	QVector3D adj = tilt * pidP + m_pidIntegral * pidI + derivative * pidD;
@@ -109,11 +166,10 @@ void FlightControl::handleTilt(QVector3D tilt)
 
 	// debug log
 	QStringList debugLineList;
-	// temporary
 	QVector3D gyro = m_gyro->getLastVal();
 	debugLineList << QString::number(tilt.x()) << QString::number(tilt.y()) << QString::number(tilt.z()) <<
-									 QString::number(gyro.x()) << QString::number(gyro.y()) << QString::number(gyro.z()) <<
-									 QString::number(adj.x())  << QString::number(adj.y())  << QString::number(adj.z())  <<
+	                 QString::number(gyro.x()) << QString::number(gyro.y()) << QString::number(gyro.z()) <<
+	                 QString::number(adj.x())  << QString::number(adj.y())  << QString::number(adj.z())  <<
 									 QString::number(m_power)  <<
 									 QString::number(m_axisX->motorPower1()) << QString::number(m_axisX->motorPower2())  <<
 									 QString::number(m_axisY->motorPower1()) << QString::number(m_axisY->motorPower2());

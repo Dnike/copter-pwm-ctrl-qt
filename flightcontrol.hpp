@@ -8,6 +8,9 @@
 #include "gyro.hpp"
 #include "CopterAxis.hpp"
 
+#include <QQuaternion>
+#include <QTime>
+
 class FlightControl : public QObject
 {
 	Q_OBJECT
@@ -29,7 +32,11 @@ public:
 		MotorY2,
 		MotorAll
 	};
-
+	
+	QQuaternion dLambda(QQuaternion lambda0, QQuaternion omega);
+	QQuaternion getLambda(QQuaternion lambda0, QQuaternion omega, qreal dt);
+	QQuaternion rodrigGamiltonParams(QVector3D a, QVector3D b);
+	QVector3D getAngles(QQuaternion lambda);
 signals:
 	void accelerometerRead(QVector3D val);
 	void motorPowerChanged(FlightControl::Motor motor, float power);
@@ -61,6 +68,9 @@ private:
 	Accelerometer* m_accel;
 	Gyro* m_gyro;
 	CopterCtrl* m_copterCtrl;
+	
+	QTime m_lastTime;
+	QQuaternion m_lastLambda;
 };
 
 #endif // FLIGHTCONTROL_HPP

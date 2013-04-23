@@ -49,6 +49,7 @@ void CopterCtrl::initSettings()
 		// TODO: move to conf file
 		m_settings->setValue("ControlPath", "/sys/devices/platform/");
 		m_settings->setValue("AccelInputPath", "/dev/input/event1");
+		m_settings->setValue("AccelHistoryLength", 5);
 		m_settings->setValue("GyroInputPath", "/dev/input/event2");
 		m_settings->setValue("ButtonsInputPath", "/dev/input/event0");
 		m_settings->setValue("TcpPort", 4000);

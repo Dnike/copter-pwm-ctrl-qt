@@ -34,8 +34,8 @@ void CopterAxis::emergencyStop()
 
 void CopterAxis::updateMotorsPower()
 {
-	int power1 = floor(static_cast<float>(m_power) - m_tilt / 2);
-	int power2 = floor(static_cast<float>(m_power) + m_tilt / 2);
+	int power1 = floor(sqrt(static_cast<float>(m_power * m_power) + m_tilt));
+	int power2 = floor(sqrt(static_cast<float>(m_power * m_power) - m_tilt));
 	float alpha = m_settings->value("MotorIntervalAlpha").toFloat();
 	int upperBound = floor(m_power * (1 + alpha));
 	int lowerBound = floor(m_power * (1 - alpha));

@@ -28,12 +28,12 @@ private:
 	QVector3D filterLinearAlt(QVector3D axis);
 
 	QVector3D m_kalmanOpt;
-	QVector3D m_linearOpt[3];
+	QVector<QVector3D> m_linearOpt;
 
 	QVector3D m_zeroAxis;
 	QVector3D m_curAxis;
 	QVector3D m_lastAxis;
-	QVector3D m_prevAxis[5];
+	QVector<QVector3D> m_prevAxis;
 	int m_meanCounter;
 	int m_linearCounter;
 	CopterCtrl* m_copterCtrl;
