@@ -47,7 +47,6 @@ void CopterCtrl::initSettings()
 	// TODO: write proper checker
 	if (m_settings->allKeys().count() == 0) {
 		// TODO: move to conf file
-		m_settings->setValue("ControlPath", "/sys/devices/platform/");
 		m_settings->setValue("AccelInputPath", "/dev/input/event1");
 		m_settings->setValue("AccelHistoryLength", 5);
 		m_settings->setValue("GyroInputPath", "/dev/input/event2");
@@ -67,8 +66,11 @@ void CopterCtrl::initSettings()
 		m_settings->setValue("PidD", -0.005d);
 		m_settings->setValue("PidIWindow", 10);
 		m_settings->setValue("FilterMethod", 3);
-		m_settings->setValue("MotorControlFile", "duty_ns");
-		m_settings->setValue("NoGraphics", false);
+		m_settings->setValue("MotorPathX1", "/sys/devices/platform/ehrpwm.0/pwm/ehrpwm.0:0/duty_ns");
+		m_settings->setValue("MotorPathX2", "/sys/devices/platform/ehrpwm.0/pwm/ehrpwm.0:1/duty_ns");
+		m_settings->setValue("MotorPathY1", "/sys/devices/platform/ehrpwm.1/pwm/ehrpwm.1:1/duty_ns");
+		m_settings->setValue("MotorPathY2", "/sys/devices/platform/ehrpwm.1/pwm/ehrpwm.1:0/duty_ns");
+		m_settings->setValue("NoGraphics", true);
 		m_settings->setValue("MotorIntervalAlpha", 0.5);
 		m_settings->setValue("DerivativeK", 0.6);
 	}

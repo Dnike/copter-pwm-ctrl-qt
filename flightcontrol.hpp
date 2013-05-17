@@ -48,9 +48,9 @@ public slots:
 protected slots:
 	void onAccelerometerRead(QVector3D val);
 	void onGyroRead(QVector3D val);
-	void initMotors(const QString& motorControlPath);
+	void initMotors();
 	void onMotorPowerChange(float power);
-	void handleTilt(QVector3D tilt);
+	void handleTilt();
 
 private:
 	int m_power;
