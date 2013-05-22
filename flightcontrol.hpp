@@ -1,8 +1,6 @@
 #ifndef FLIGHTCONTROL_HPP
 #define FLIGHTCONTROL_HPP
 
-#include <QObject>
-
 #include "CopterCtrl.hpp"
 #include "accelerometer.hpp"
 #include "gyro.hpp"
@@ -65,8 +63,8 @@ private:
 	QVector3D m_pidIntegral;
 	unsigned int m_pidCounter;
 
-	Accelerometer* m_accel;
-	Gyro* m_gyro;
+	QSharedPointer<Accelerometer> m_accel;
+	QSharedPointer<Gyro> m_gyro;
 	CopterCtrl* m_copterCtrl;
 	
 	QTime m_lastTime;
