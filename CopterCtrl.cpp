@@ -75,6 +75,7 @@ void CopterCtrl::initSettings()
 		m_settings->setValue("MotorIntervalAlpha", 0.5);
 		m_settings->setValue("DerivativeK", 0.6);
 		m_settings->setValue("GyroMappingCoeff", 938);
+		m_settings->setValue("AccelCorrectingCoeff", 0.01);
 	}
 	
 	m_settings->setFallbacksEnabled(false);

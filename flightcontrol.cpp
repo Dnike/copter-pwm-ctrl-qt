@@ -162,7 +162,8 @@ void FlightControl::handleTilt()
 	QQuaternion lambda = getLambda(m_lastLambda, omega, dt);
 	
 	QQuaternion lambda_accel = rodrigGamiltonParams(m_accel->getLastVal().normalized(), QVector3D(0, 0, 1));
-	lambda = lambda * (1-0.005) + lambda_accel * 0.005;	
+	qreal accelCoeff = m_copterCtrl->getSettings()->value("AccelCorrectingCoeff").toReal();
+	lambda = lambda * (1 - accelCoeff) + lambda_accel * accelCoeff;	
 	
 	m_lastLambda = lambda;
 	
