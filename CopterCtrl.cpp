@@ -148,7 +148,6 @@ void CopterCtrl::onTcpConnection()
 void CopterCtrl::onTcpDisconnection()
 {
 	qDebug() << "Existing connection disconnected";
-	m_tcpConnection->deleteLater();
 	m_tcpConnection = NULL;
 }
 
@@ -213,7 +212,6 @@ void CopterCtrl::onDebugTcpConnection()
 void CopterCtrl::onDebugTcpDisconnection()
 {
 	qDebug() << "Existing debug connection disconnected";
-	m_debugTcpConnection->deleteLater();
 	m_debugTcpConnection = NULL;
 }
 

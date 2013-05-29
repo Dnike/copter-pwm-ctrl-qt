@@ -62,10 +62,10 @@ void Accelerometer::onRead()
 	switch (evt.code)
 	{
 		case ABS_X:
-			m_curAxis.setY(-evt.value);
+			m_curAxis.setY(evt.value);
 			break;
 		case ABS_Y:
-			m_curAxis.setX(-evt.value);
+			m_curAxis.setX(evt.value);
 			break;
 		case ABS_Z:
 			m_curAxis.setZ(evt.value);

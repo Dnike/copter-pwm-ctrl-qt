@@ -23,7 +23,7 @@ FlightControl::FlightControl(CopterCtrl* copterCtrl) :
 	
 	QTimer* t = new QTimer(this);
 	connect(t, SIGNAL(timeout()), this, SLOT(handleTilt()));
-	t->start(20);
+	t->start(10);
 	// gyro setup
 	m_gyro = QSharedPointer<Gyro>(
 	           new Gyro(m_copterCtrl->getSettings()->value("GyroInputPath").toString(), m_copterCtrl, this));
