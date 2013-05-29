@@ -22,9 +22,8 @@ FlightControl::FlightControl(CopterCtrl* copterCtrl) :
 	connect(m_accel.data(), SIGNAL(dataRead(QVector3D)), this, SLOT(onAccelerometerRead(QVector3D)));
 	
 	QTimer* t = new QTimer(this);
-	//	connect(m_accel, SIGNAL(dataRead(QVector3D)), this, SLOT(handleTilt()));
 	connect(t, SIGNAL(timeout()), this, SLOT(handleTilt()));
-	t->start(10);
+	t->start(20);
 	// gyro setup
 	m_gyro = QSharedPointer<Gyro>(
 	           new Gyro(m_copterCtrl->getSettings()->value("GyroInputPath").toString(), m_copterCtrl, this));
@@ -33,6 +32,7 @@ FlightControl::FlightControl(CopterCtrl* copterCtrl) :
 
 void FlightControl::initMotors()
 {
+	// initialize axes and motors; motors' paths defined in config
 	int powerMax = m_copterCtrl->getSettings()->value("MotorMax").toInt();
 	int powerMin = m_copterCtrl->getSettings()->value("MotorMin").toInt();
 	QString motorPathX1 = m_copterCtrl->getSettings()->value("MotorPathX1").toString();
@@ -63,6 +63,7 @@ void FlightControl::onMotorPowerChange(float power)
 
 void FlightControl::adjustTilt(QVector3D tilt) const
 {
+	// apply power adjusment
 	m_axisX->tilt(tilt.x());
 	m_axisY->tilt(tilt.y());
 }
@@ -83,6 +84,7 @@ void FlightControl::adjustPower(int _incr)
 
 void FlightControl::setupAccelZeroAxis()
 {
+	// deprecated, rewrite to fit new model
 	m_copterCtrl->tcpLog("Start zero axis setup");
 	m_accel->adjustZeroAxis();
 }
@@ -103,6 +105,7 @@ QQuaternion FlightControl::dLambda(QQuaternion lambda0, QQuaternion omega)
 
 QQuaternion FlightControl::getLambda(QQuaternion lambda0, QQuaternion omega, qreal dt)
 {
+	// solving diff equation with Runge-Kutt method
 	QQuaternion k1, k2, k3, k4;
 	k1 = dLambda(lambda0, omega) * dt;
 	k2 = dLambda(lambda0 + k1 * 0.5, omega) * dt;
@@ -125,6 +128,7 @@ QVector3D FlightControl::getAngles(QQuaternion lambda) {
 		 attitude = asin(2*qx*qy + 2*qz*qw) 
 		 bank = atan2(2*qx*qw-2*qy*qz , 1 - 2*qx2 - 2*qz2)
 	*/   
+	// get angles from quaternion
 	qreal test = lambda.x() * lambda.y() + lambda.z() * lambda.scalar();
 	qreal psi, gamma, theta;
 	if (test > 0.499) {
@@ -154,6 +158,7 @@ QVector3D FlightControl::getAngles(QQuaternion lambda) {
 
 void FlightControl::handleTilt()
 {	
+	// periodic method, calculates power adjustments from accel ang gyro values
 	QTime curTime = QTime::currentTime();
 	qreal dt = m_lastTime.msecsTo(curTime) / 1000.0;
 	m_lastTime = curTime;
@@ -167,7 +172,7 @@ void FlightControl::handleTilt()
 	
 	m_lastLambda = lambda;
 	
-	
+	// compute PID adjustment
 	qreal pidP = m_copterCtrl->getSettings()->value("PidP").toReal();
 	qreal pidI = m_copterCtrl->getSettings()->value("PidI").toReal();
 	qreal pidD = m_copterCtrl->getSettings()->value("PidD").toReal();
@@ -189,7 +194,7 @@ void FlightControl::handleTilt()
 	
 	QVector3D accelAngles = getAngles(lambda_accel);
 	
-	// debug log
+	// debug log (telemetrics)
 	QStringList debugLineList;
 	QVector3D gyro = m_gyro->getLastVal();
 	debugLineList << QString::number(tilt.x()) << QString::number(tilt.y()) << QString::number(tilt.z()) <<

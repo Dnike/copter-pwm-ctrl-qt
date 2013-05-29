@@ -19,17 +19,18 @@ CopterCtrl::CopterCtrl() :
 {
 	initSettings();
 	
+	// stabilization control class
 	m_flightControl = QSharedPointer<FlightControl>(new FlightControl(this));
 	
-	// tcp server setup
+	// tcp server setup (control)
 	m_tcpServer.listen(QHostAddress::Any, m_settings->value("TcpPort").toInt());
 	connect(&m_tcpServer, SIGNAL(newConnection()), this, SLOT(onTcpConnection()));
 	
-	// debug tcp server setup
+	// debug tcp server setup (telemetrics)
 	m_debugTcpServer.listen(QHostAddress::Any, m_settings->value("DebugPort").toInt());
 	connect(&m_debugTcpServer, SIGNAL(newConnection()), this, SLOT(onDebugTcpConnection()));
 	
-	// buttons reading
+	// on-board buttons reading
 	const QString s_buttons_input_path = m_settings->value("ButtonsInputPath").toString();
 	m_buttonsInputFd = ::open(s_buttons_input_path.toLatin1().data(), O_SYNC, O_RDONLY);
 	if (m_buttonsInputFd == -1)
@@ -43,6 +44,7 @@ CopterCtrl::~CopterCtrl() { }
 
 void CopterCtrl::initSettings()
 {
+	// initialize config
 	m_settings = QSharedPointer<QSettings>(new QSettings(QApplication::applicationDirPath() + "/config.ini", 
 	                                                     QSettings::IniFormat));
 	
@@ -86,6 +88,7 @@ void CopterCtrl::initSettings()
 
 void CopterCtrl::adjustSettingsValue(const QString &key, QMetaType::Type type, bool increase)
 {
+	// adjusting settings in realtime (useful in PID controller tweaking)
 	switch(type) {
 		case QMetaType::Int:
 			m_settings->setValue(key, m_settings->value(key).toInt() + (increase ? 1 : -1));
@@ -118,11 +121,13 @@ void CopterCtrl::onSettingsValueChange(const QString &key, const QVariant &value
 }
 
 void CopterCtrl::emergencyStop() {
+	// stop motors, kill application
 	m_flightControl->emergencyStop();
 }
 
 void CopterCtrl::tcpLog(const QString &message)
 {
+	// write some message to tcp
 	if (!m_tcpConnection.isNull() && m_tcpConnection->isValid()) {
 		m_tcpConnection->write(message.toAscii());
 		m_tcpConnection->write("\r\n");
@@ -149,11 +154,11 @@ void CopterCtrl::onTcpDisconnection()
 
 void CopterCtrl::onTcpNetworkRead()
 {
+	// controlling the flight
 	if (m_tcpConnection.isNull())
 		return;
 	
 	static const int s_power_max = m_settings->value("PowerMax").toInt();
-	//static const int s_power_min = m_settings->value("PowerMin").toInt();
 	static const int s_power_step1 = m_settings->value("PowerStep1").toInt();
 	static const int s_power_step2 = m_settings->value("PowerStep2").toInt();
 	
@@ -216,7 +221,6 @@ void CopterCtrl::onDebugTcpNetworkRead()
 {
 	if (m_debugTcpConnection.isNull())
 		return;
-	
 }
 
 void CopterCtrl::onButtonRead()

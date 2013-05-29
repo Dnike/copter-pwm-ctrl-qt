@@ -40,6 +40,8 @@ private:
 
 	int m_inputFd;
 	QSocketNotifier* m_inputNotifier;
+	
+	int m_filterMethod;
 };
 
 #endif // ACCELEROMETER_HPP

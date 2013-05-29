@@ -26,6 +26,7 @@ Gyro::Gyro(const QString &inputPath, CopterCtrl *copterCtrl, QObject *parent) :
 
 void Gyro::onRead()
 {
+	// parse event and update last value
 	struct input_event evt;
 
 	if (read(m_inputFd, reinterpret_cast<char*>(&evt), sizeof(evt)) != sizeof(evt))

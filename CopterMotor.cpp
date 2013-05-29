@@ -4,8 +4,10 @@
 
 void CopterMotor::invoke(int _power)
 {
+	// applying power to hardware motor
 	m_power = _power;
 	QString s;
+	// TODO: remove magic number
 	float powerFactor = (float)(m_powerMax - m_powerMin) / 100;
 	s.sprintf("%d\n", static_cast<int>(_power * powerFactor + m_powerMin));
 	if (!m_ctrlFile.isOpen()) {

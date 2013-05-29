@@ -22,6 +22,8 @@ Accelerometer::Accelerometer(const QString inputPath, CopterCtrl* copterCtrl, QO
   // TODO: remove magic number
   m_linearOpt(3, QVector3D())
 {
+	m_filterMethod = m_copterCtrl->getSettings()->value("FilterMethod").toInt();
+	
 	m_inputFd = ::open(inputPath.toLatin1().data(), O_SYNC, O_RDONLY);
 	if (m_inputFd == -1)
 		qDebug() << "Cannot open accelerometer input file " << inputPath << ", reason: " << errno;
@@ -37,6 +39,7 @@ Accelerometer::~Accelerometer()
 
 void Accelerometer::onRead()
 {
+	// parse event and update last value
 	struct input_event evt;
 	
 	if (read(m_inputFd, reinterpret_cast<char*>(&evt), sizeof(evt)) != sizeof(evt))
@@ -59,10 +62,10 @@ void Accelerometer::onRead()
 	switch (evt.code)
 	{
 		case ABS_X:
-			m_curAxis.setY(evt.value);
+			m_curAxis.setY(-evt.value);
 			break;
 		case ABS_Y:
-			m_curAxis.setX(evt.value);
+			m_curAxis.setX(-evt.value);
 			break;
 		case ABS_Z:
 			m_curAxis.setZ(evt.value);
@@ -72,8 +75,9 @@ void Accelerometer::onRead()
 
 QVector3D Accelerometer::filterAxis(QVector3D axis)
 {
+	// filtering method defined in config
 	QVector3D res;
-	switch (m_copterCtrl->getSettings()->value("FilterMethod").toInt()) {
+	switch (m_filterMethod) {
 		case 0: res = filterMean(axis); break;
 		case 1: res = filterKalman(axis); break;
 		case 2: res = filterLinear(axis); break;
