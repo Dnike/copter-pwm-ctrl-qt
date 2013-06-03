@@ -14,7 +14,7 @@ class FlightControl : public QObject
 	Q_OBJECT
 public:
 	explicit FlightControl(CopterCtrl* CopterCtrl);
-	
+
 	float tiltX() const { return m_axisX->tilt(); }
 	float tiltY() const { return m_axisY->tilt(); }
 	void tiltX(float _tilt) const { m_axisX->tilt(_tilt); m_axisX->setPower(m_power); }
@@ -30,10 +30,10 @@ public:
 		MotorY2,
 		MotorAll
 	};
-	
+
 	QQuaternion dLambda(QQuaternion lambda0, QQuaternion omega);
 	QQuaternion getLambda(QQuaternion lambda0, QQuaternion omega, qreal dt);
-	QQuaternion rodrigGamiltonParams(QVector3D a, QVector3D b);
+	QQuaternion EulerToQuaternion(QVector3D accel_data, QQuaternion lambda);
 	QVector3D getAngles(QQuaternion lambda);
 signals:
 	void accelerometerRead(QVector3D val);
@@ -66,7 +66,7 @@ private:
 	QSharedPointer<Accelerometer> m_accel;
 	QSharedPointer<Gyro> m_gyro;
 	CopterCtrl* m_copterCtrl;
-	
+
 	QTime m_lastTime;
 	QQuaternion m_lastLambda;
 };
