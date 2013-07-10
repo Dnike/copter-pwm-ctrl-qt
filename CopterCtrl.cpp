@@ -18,18 +18,18 @@ CopterCtrl::CopterCtrl() :
   m_debugTcpConnection()
 {
 	initSettings();
-	
+
 	// stabilization control class
 	m_flightControl = QSharedPointer<FlightControl>(new FlightControl(this));
-	
+
 	// tcp server setup (control)
 	m_tcpServer.listen(QHostAddress::Any, m_settings->value("TcpPort").toInt());
 	connect(&m_tcpServer, SIGNAL(newConnection()), this, SLOT(onTcpConnection()));
-	
+
 	// debug tcp server setup (telemetrics)
 	m_debugTcpServer.listen(QHostAddress::Any, m_settings->value("DebugPort").toInt());
 	connect(&m_debugTcpServer, SIGNAL(newConnection()), this, SLOT(onDebugTcpConnection()));
-	
+
 	// on-board buttons reading
 	const QString s_buttons_input_path = m_settings->value("ButtonsInputPath").toString();
 	m_buttonsInputFd = ::open(s_buttons_input_path.toLatin1().data(), O_SYNC, O_RDONLY);
@@ -45,9 +45,9 @@ CopterCtrl::~CopterCtrl() { }
 void CopterCtrl::initSettings()
 {
 	// initialize config
-	m_settings = QSharedPointer<QSettings>(new QSettings(QApplication::applicationDirPath() + "/config.ini", 
+	m_settings = QSharedPointer<QSettings>(new QSettings(QApplication::applicationDirPath() + "/config.ini",
 	                                                     QSettings::IniFormat));
-	
+
 	// TODO: write proper checker
 	if (m_settings->allKeys().count() == 0) {
 		// TODO: move to conf file
@@ -59,10 +59,9 @@ void CopterCtrl::initSettings()
 		m_settings->setValue("DebugPort", 7777);
 		m_settings->setValue("PowerStep1", 1);
 		m_settings->setValue("PowerStep2", 5);
-		m_settings->setValue("PowerMin", 0);
-		m_settings->setValue("PowerMax", 100);
 		m_settings->setValue("MotorMax", 1740000);
-		m_settings->setValue("MotorMin", 1200000);
+		m_settings->setValue("MotorMin", 1300000);
+		m_settings->setValue("MotorZero", 1200000);
 		m_settings->setValue("KalmanK", 0.95);
 		m_settings->setValue("PidP", -0.02d);
 		m_settings->setValue("PidI", 0.0);
@@ -75,14 +74,14 @@ void CopterCtrl::initSettings()
 		m_settings->setValue("MotorPathY2", "/sys/devices/platform/ehrpwm.1/pwm/ehrpwm.1:0/duty_ns");
 		m_settings->setValue("NoGraphics", true);
 		m_settings->setValue("MotorIntervalAlpha", 0.5);
-		m_settings->setValue("DerivativeK", 0.6);
-		m_settings->setValue("GyroMappingCoeff", 938);
+		m_settings->setValue("DerivativeK", 0.9);
+		m_settings->setValue("GyroMappingCoeff", 600);
 		m_settings->setValue("AccelCorrectingCoeff", 0.01);
 	}
-	
+
 	m_settings->setFallbacksEnabled(false);
 	m_settings->sync();
-	
+
 	connect(this, SIGNAL(settingsValueChanged(QString,QVariant)), this, SLOT(onSettingsValueChange(QString,QVariant)));
 }
 
@@ -156,11 +155,11 @@ void CopterCtrl::onTcpNetworkRead()
 	// controlling the flight
 	if (m_tcpConnection.isNull())
 		return;
-	
-	static const int s_power_max = m_settings->value("PowerMax").toInt();
+
+	static const int s_power_max = 100;
 	static const int s_power_step1 = m_settings->value("PowerStep1").toInt();
 	static const int s_power_step2 = m_settings->value("PowerStep2").toInt();
-	
+
 	while (m_tcpConnection->isReadable())
 	{
 		char c;
@@ -173,19 +172,15 @@ void CopterCtrl::onTcpNetworkRead()
 			case 'x': m_flightControl->adjustPower(-s_power_step1); break;
 			case 'c': m_flightControl->adjustPower(+s_power_step1); break;
 			case 'v': m_flightControl->adjustPower(+s_power_step2); break;
-			case 'V': m_flightControl->adjustPower(+s_power_max); break;
+			//case 'V': m_flightControl->adjustPower(+s_power_max); break;
 			case '0': m_flightControl->setupAccelZeroAxis(); break;
 			case 'a': emergencyStop(); break;
-			case '[': adjustSettingsValue("MotorMax", QMetaType::Int, false); break;
-			case ']': adjustSettingsValue("MotorMax", QMetaType::Int, true); break;
-			case '{': adjustSettingsValue("MotorMin", QMetaType::Int, false); break;
-			case '}': adjustSettingsValue("MotorMin", QMetaType::Int, true); break;
 			case ',': adjustSettingsValue("PidP", QMetaType::Float, false); break;
 			case '.': adjustSettingsValue("PidP", QMetaType::Float, true); break;
 			case '<': adjustSettingsValue("PidD", QMetaType::Float, false); break;
 			case '>': adjustSettingsValue("PidD", QMetaType::Float, true); break;
-			case '(': adjustSettingsValue("PidI", QMetaType::Float, false); break;
-			case ')': adjustSettingsValue("PidI", QMetaType::Float, true); break;
+			case '[': adjustSettingsValue("PidI", QMetaType::Float, false); break;
+			case ']': adjustSettingsValue("PidI", QMetaType::Float, true); break;
 		}
 	}
 }
@@ -224,22 +219,22 @@ void CopterCtrl::onDebugTcpNetworkRead()
 void CopterCtrl::onButtonRead()
 {
 	struct input_event evt;
-	
+
 	if (read(m_buttonsInputFd, reinterpret_cast<char*>(&evt), sizeof(evt)) != sizeof(evt))
 	{
 		qDebug() << "Incomplete buttons data read";
 		return;
 	}
-	
+
 	if (evt.type != EV_KEY)
 	{
 		if (evt.type != EV_SYN)
 			qDebug() << "Input event type is not EV_KEY or EV_SYN: " << evt.type;
 		return;
 	}
-	
+
 	BoardButton button;
-	
+
 	switch (evt.code) {
 		case KEY_F1: button = Button1; break;
 		case KEY_F2: button = Button2; break;
@@ -250,9 +245,9 @@ void CopterCtrl::onButtonRead()
 		case KEY_F7: button = Button7; break;
 		case KEY_F8: button = Button8; break;
 	}
-	
+
 	tcpLog("Button pressed: " + QString::number(button));
-	
+
 	if (static_cast<bool>(evt.value)) {
 		emit buttonPressed(button);
 	}

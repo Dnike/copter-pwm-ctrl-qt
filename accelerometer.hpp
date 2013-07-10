@@ -2,6 +2,7 @@
 #define ACCELEROMETER_HPP
 
 #include <QObject>
+#include <QQuaternion>
 #include "CopterCtrl.hpp"
 
 class Accelerometer : public QObject
@@ -10,9 +11,9 @@ class Accelerometer : public QObject
 public:
 	explicit Accelerometer(const QString inputPath, CopterCtrl* copterCtrl, QObject *parent = 0);
 	~Accelerometer();
-	
+
 	void adjustZeroAxis();
-	QVector3D getLastVal() { return m_lastAxis; }
+	QVector3D getLastVal();
 
 signals:
 	void dataRead(QVector3D val);
@@ -30,7 +31,7 @@ private:
 	QVector3D m_kalmanOpt;
 	QVector<QVector3D> m_linearOpt;
 
-	QVector3D m_zeroAxis;
+	QQuaternion m_zeroAxis;
 	QVector3D m_curAxis;
 	QVector3D m_lastAxis;
 	QVector<QVector3D> m_prevAxis;
@@ -40,7 +41,7 @@ private:
 
 	int m_inputFd;
 	QSocketNotifier* m_inputNotifier;
-	
+
 	int m_filterMethod;
 };
 

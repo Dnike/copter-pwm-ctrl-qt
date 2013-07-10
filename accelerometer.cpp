@@ -12,7 +12,7 @@ Accelerometer::Accelerometer(const QString inputPath, CopterCtrl* copterCtrl, QO
   m_inputFd(-1),
   m_inputNotifier(0),
   m_copterCtrl(copterCtrl),
-  m_zeroAxis(),
+  m_zeroAxis(1,0,0,0),
   m_curAxis(),
   m_lastAxis(),
   m_meanCounter(0),
@@ -23,11 +23,11 @@ Accelerometer::Accelerometer(const QString inputPath, CopterCtrl* copterCtrl, QO
   m_linearOpt(3, QVector3D())
 {
 	m_filterMethod = m_copterCtrl->getSettings()->value("FilterMethod").toInt();
-	
+
 	m_inputFd = ::open(inputPath.toLatin1().data(), O_SYNC, O_RDONLY);
 	if (m_inputFd == -1)
 		qDebug() << "Cannot open accelerometer input file " << inputPath << ", reason: " << errno;
-	
+
 	m_inputNotifier = new QSocketNotifier(m_inputFd, QSocketNotifier::Read, this);
 	connect(m_inputNotifier, SIGNAL(activated(int)), this, SLOT(onRead()));
 	m_inputNotifier->setEnabled(true);
@@ -41,24 +41,24 @@ void Accelerometer::onRead()
 {
 	// parse event and update last value
 	struct input_event evt;
-	
+
 	if (read(m_inputFd, reinterpret_cast<char*>(&evt), sizeof(evt)) != sizeof(evt))
 	{
 		qDebug() << "Incomplete accelerometer data read";
 		return;
 	}
-	
+
 	if (evt.type != EV_ABS)
 	{
 		if (evt.type != EV_SYN)
 			qDebug() << "Input event type is not EV_ABS or EV_SYN: " << evt.type;
 		else {
-			m_lastAxis = filterAxis(m_curAxis - m_zeroAxis);
+			m_lastAxis = filterAxis(m_curAxis);
 			emit dataRead(m_lastAxis);
 		}
 		return;
 	}
-	
+
 	switch (evt.code)
 	{
 		case ABS_X:
@@ -97,7 +97,7 @@ QVector3D Accelerometer::filterMean(QVector3D axis)
 	int length = m_prevAxis.size();
 	m_prevAxis[m_meanCounter] = axis;
 	m_meanCounter = (m_meanCounter + 1) % length;
-	for (int i = 0; i < length; ++i) 
+	for (int i = 0; i < length; ++i)
 		res = res + m_prevAxis[i] / length;
 	return res;
 }
@@ -132,6 +132,28 @@ QVector3D Accelerometer::filterLinearAlt(QVector3D axis)
 
 void Accelerometer::adjustZeroAxis()
 {
-	m_zeroAxis = m_lastAxis;
+    QQuaternion accel(0,m_lastAxis);
+    accel.normalize();
+    QQuaternion g(0,0,0,-1);
+    QQuaternion v;
+    v = 0.5 * (accel*g - g*accel);
+    v.normalize();
+
+    m_zeroAxis = v;
+    v = accel + g;
+    v.normalize();
+
+	QQuaternion p = v*g - g*v;
+
+	qreal sin_phi = p.length() / 2;
+	m_zeroAxis *= sin_phi;
+	m_zeroAxis.setScalar( -(v*g + g*v).scalar() / 2 );
+}
+
+
+QVector3D Accelerometer::getLastVal()
+{
+    return m_zeroAxis.rotatedVector(m_lastAxis);
+    //return m_lastAxis;
 }
 

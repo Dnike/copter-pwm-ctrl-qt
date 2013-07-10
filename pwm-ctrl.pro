@@ -19,7 +19,7 @@ TARGET =        copter-pwm-ctrl-qt
 SOURCES +=      \
     CopterMotor.cpp \
     CopterCtrl.cpp \
-    CopterAxis.cpp \
+    CopterMotorBase.cpp \
     MainWindow.cpp \
     Main.cpp \
     accelerometer.cpp \
@@ -29,13 +29,13 @@ SOURCES +=      \
 HEADERS +=      \
     CopterMotor.hpp \
     CopterCtrl.hpp \
-    CopterAxis.hpp \
+    CopterMotorBase.hpp \
     MainWindow.hpp \
     accelerometer.hpp \
     gyro.hpp \
     flightcontrol.hpp
 
-FORMS += \       
+FORMS += \
     MainWindow.ui
 
 QMAKE_CXXFLAGS += -std=c++0x

@@ -4,7 +4,7 @@
 #include "CopterCtrl.hpp"
 #include "accelerometer.hpp"
 #include "gyro.hpp"
-#include "CopterAxis.hpp"
+#include "CopterMotorBase.hpp"
 
 #include <QQuaternion>
 #include <QTime>
@@ -15,11 +15,6 @@ class FlightControl : public QObject
 public:
 	explicit FlightControl(CopterCtrl* CopterCtrl);
 
-	float tiltX() const { return m_axisX->tilt(); }
-	float tiltY() const { return m_axisY->tilt(); }
-	void tiltX(float _tilt) const { m_axisX->tilt(_tilt); m_axisX->setPower(m_power); }
-	void tiltY(float _tilt) const { m_axisY->tilt(_tilt); m_axisY->setPower(m_power); }
-	void adjustTilt(float tiltX, float tiltY) const { QVector3D tilt(tiltX, tiltY, 0); adjustTilt(tilt); }
 	void adjustTilt(QVector3D tilt) const;
 	void adjustPower(int _incr);
 
@@ -51,24 +46,23 @@ protected slots:
 	void handleTilt();
 
 private:
-	int m_power;
-	CopterAxis* m_axisX;
-	CopterAxis* m_axisY;
+	int power;
+	CopterMotorBase* motorBase;
 
-	QVector3D m_lastDerivative;
-	QMap<CopterMotor*, Motor> m_motorIds;
+	QVector3D lastDerivative;
+	QMap<CopterMotor*, Motor> motorIds;
 
-	QVector3D m_lastTilt;
-	QVector<QVector3D> m_pidIntegralVector;
-	QVector3D m_pidIntegral;
-	unsigned int m_pidCounter;
+	QVector3D lastTilt;
+	QVector<QVector3D> pidIntegralVector;
+	QVector3D pidIntegral;
+	unsigned int pidCounter;
 
-	QSharedPointer<Accelerometer> m_accel;
-	QSharedPointer<Gyro> m_gyro;
-	CopterCtrl* m_copterCtrl;
+	QSharedPointer<Accelerometer> accel;
+	QSharedPointer<Gyro> gyro;
+	CopterCtrl* copterCtrl;
 
-	QTime m_lastTime;
-	QQuaternion m_lastLambda;
+	QTime lastTime;
+	QQuaternion lastLambda;
 };
 
 #endif // FLIGHTCONTROL_HPP

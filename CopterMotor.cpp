@@ -5,37 +5,37 @@
 void CopterMotor::invoke(int _power)
 {
 	// applying power to hardware motor
-	m_power = _power;
+	power = _power;
 	QString s;
 	// TODO: remove magic number
-	float powerFactor = (float)(m_powerMax - m_powerMin) / 100;
-	s.sprintf("%d\n", static_cast<int>(_power * powerFactor + m_powerMin));
-	if (!m_ctrlFile.isOpen()) {
-		if (!m_ctrlFile.open(QIODevice::WriteOnly|QIODevice::Truncate|QIODevice::Unbuffered|QIODevice::Text)) {
-			qDebug() << "Can't open motor control file " + m_ctrlFile.fileName() << endl;
+	s.sprintf("%d\n", _power);
+	if (!ctrlFile.isOpen()) {
+		if (!ctrlFile.open(QIODevice::WriteOnly|QIODevice::Truncate|QIODevice::Unbuffered|QIODevice::Text)) {
+			qDebug() << "Can't open motor control file " + ctrlFile.fileName() << endl;
 		}
 	}
-	m_ctrlFile.write(s.toLatin1());
-	m_ctrlFile.close();
+	ctrlFile.write(s.toLatin1());
+	ctrlFile.close();
 }
 
-CopterMotor::CopterMotor(int powerMin, int powerMax, const QString& _ctrlPath) :
-	m_ctrlFile(_ctrlPath),
-	m_delta(1.0),
-	m_powerMin(powerMin),
-	m_powerMax(powerMax),
-	m_power(0)
+CopterMotor::CopterMotor(int _powerZero, int _powerMin, int _powerMax, const QString& _ctrlPath) :
+	ctrlFile(_ctrlPath),
+	delta(1.0),
+	powerZero(_powerZero),
+	powerMin(_powerMin),
+	powerMax(_powerMax),
+	power(_powerZero)
 {
-	if (!m_ctrlFile.open(QIODevice::WriteOnly|QIODevice::Truncate|QIODevice::Unbuffered|QIODevice::Text)) {
-		qDebug() << "Can't open motor control file " + m_ctrlFile.fileName() << endl;
+	if (!ctrlFile.open(QIODevice::WriteOnly|QIODevice::Truncate|QIODevice::Unbuffered|QIODevice::Text)) {
+		qDebug() << "Can't open motor control file " + ctrlFile.fileName() << endl;
 	}
-	invoke(0);
+	invoke(powerZero);
 }
 
 CopterMotor::~CopterMotor()
 {
-	invoke(0);
-	m_ctrlFile.close();
+	invoke(powerZero);
+	ctrlFile.close();
 }
 
 void CopterMotor::setPower(int _power)
@@ -47,6 +47,6 @@ void CopterMotor::setPower(int _power)
 
 void CopterMotor::emergencyStop()
 {
-	invoke(0);
+	invoke(powerZero);
 }
 
